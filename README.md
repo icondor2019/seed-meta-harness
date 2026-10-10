@@ -1,6 +1,14 @@
 # Seed Meta-Harness
 
-Portable, lightweight, agent-driven software development harness. Initial target: **Codex local and Codex Cloud**.
+A portable, agent-agnostic collection of engineering practices, canonical definitions, and validated harness-specific reference implementations. Codex is an initial consumer, not the source of truth.
+
+## Propósito
+
+El Meta-Harness estandariza el conocimiento compartido y ofrece prácticas de ingeniería reutilizables, sin imponer una única forma de desarrollar software.
+
+Esto permite mantener una base común en el equipo, respetar los flujos maduros que ya funcionan y adoptar nuevas capacidades de manera gradual, según las necesidades de cada proyecto.
+
+La fuente canónica se mantiene en `.agents/`. OKF 0.2 y Engram forman la base compartida para los proyectos que adopten el estándar; SDD, los subagentes y las integraciones adicionales se adoptan de forma modular. Las implementaciones de referencia para Codex, OpenCode y otros entornos deberán mantenerse vinculadas y verificadas contra el canon.
 
 ## Architectural principles
 
@@ -15,6 +23,4 @@ Portable, lightweight, agent-driven software development harness. Initial target
 
 Architecture and staged implementation tasks are maintained in [Plane — Meta-Harness SDD](https://app.plane.so/icondor/projects/1d47b74b-6a73-444e-9b72-434d62d9a62c/).
 
-Initial work starts with **MHSDD-11** (verify Codex runtime capabilities), followed by **MHSDD-2** (define the agent contracts) and **MHSDD-4** (deterministic workflow plugin).
-
-> Status: architecture baseline only. No agent definitions, installer, MCP configuration, or SDD implementation have been shipped yet.
+Project work and its current status are tracked in Plane. The canonical specification remains independent of any single runtime.
