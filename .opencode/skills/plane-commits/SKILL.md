@@ -1,6 +1,6 @@
 ---
 name: plane-commits
-description: Prepare or create a task-linked Git commit for a Plane work item using the agreed bracketed identifier convention. Use when committing work associated with Plane; does not authorize commits, pushes, merges or task-state changes.
+description: Prepare task-linked Git commits and verify Plane reference formatting in pull requests before merge. Use for commits or PR linkage associated with Plane; does not authorize commits, pushes, merges or task-state changes.
 ---
 
 # Plane task commits
@@ -26,6 +26,46 @@ Confirmed example for this repository:
 
 Preserve an exact subject provided by the user. Do not prepend a conventional-commit
 type, change the brackets or append closing keywords unless requested.
+
+The commit format is a repository traceability convention. It does not by itself
+activate Plane PR state automation. Use it for task-owned follow-up and conflict
+resolution commits as well, but do not label unrelated changes with the task ID.
+Do not rewrite existing or shared commits merely to normalize their subjects.
+
+## Pull request linkage and merge checks
+
+Plane's documented automation reads a bracketed work item ID in the PR title or
+description. Require `[<PROJECT>-<NUMBER>]` in at least one of those fields before
+merge; prefer a title such as `[MHSDD-3] Configure MCP tools and document Windows setup`.
+A branch name, an identifier in a commit, or an unbracketed reference is insufficient
+for the documented PR state automation. An unbracketed ID links only a reference.
+
+Before an authorized merge, inspect the actual GitHub PR title and description,
+including after conflict resolution or when GitHub derives a title from a branch.
+Check for Plane App's linkage confirmation comment and, when accessible, the
+project's PR state mapping, including merged -> Done. Do not claim the integration
+or mapping is configured solely because an MCP connection works. If settings are
+unavailable, report that verification limit. Correct PR metadata only when authorized.
+
+After a merge, verify both GitHub merged status and the actual Plane work item
+state/activity. A successful merge is not evidence that the automation ran.
+If Plane did not transition, report the discrepancy and inspect PR reference,
+mapping and integration delivery; do not assume an unformatted commit vetoed it.
+Do not force a status change, rewrite history or replay events without authorization.
+Editing an already merged PR is not a guaranteed way to replay its merge event.
+
+Official reference:
+https://docs.plane.so/integrations/github#reference-formats
+
+### Observed failure: MHSDD-3
+
+GitHub PR https://github.com/icondor2019/seed-meta-harness/pull/2 merged to main
+with four commits. One commit used `[MHSDD-3]`; the PR title was
+`Codex/mhsdd 3 mcp catalog` and its description was empty. Plane remained Backlog,
+with no state transition in the retrieved activity. This confirms a missing
+documented PR automation reference, not a rule requiring every commit to match.
+Integration mapping and delivery logs were not available in these tool reads;
+the missing reference is an evidenced defect, not a complete webhook diagnosis.
 
 ## Resolve the task and scope
 
@@ -61,8 +101,9 @@ For this repository, task-state changes belong exclusively to the configured
 repository merge automation. Never manually change the Plane status because a
 commit was prepared, created or pushed. Creating a commit does not complete a task.
 
-The bracketed identifier is the agreed linking convention. Do not claim that Plane
-received the commit or that merge automation ran without observing that result.
+Bracketed commit subjects provide traceability; bracketed PR title/description
+references enable the documented automation when the integration and mapping are
+configured. Do not claim Plane received a commit or automation ran without evidence.
 This skill does not configure repository integrations or implement automation.
 
 When the user authorizes a Plane progress update, add a clearly separated progress
