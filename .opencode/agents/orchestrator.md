@@ -1,7 +1,8 @@
 ---
 description: Coordinate the artifact-driven SDD workflow and delegate bounded assignments.
 mode: primary
-# Optional per-role model override: provider/model-id (otherwise inherited).
+model: opencode-go/glm-5.2
+
 permission:
   task:
     "*": deny

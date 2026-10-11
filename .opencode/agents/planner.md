@@ -1,7 +1,7 @@
 ---
 description: Produce proposal, design and task artifacts from clarified requirements.
 mode: subagent
-# Optional per-role model override: provider/model-id (otherwise inherited).
+model: opencode-go/glm-5.2
 permission:
   task: deny
 ---

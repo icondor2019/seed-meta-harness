@@ -1,7 +1,7 @@
 ---
 description: Perform bounded low-risk maintenance and escalate uncertain or structural changes.
 mode: subagent
-# Optional per-role model override: provider/model-id (otherwise inherited).
+model: opencode-go/minimax-m3
 permission:
   task: deny
   edit:

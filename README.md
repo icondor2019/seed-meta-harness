@@ -1,26 +1,109 @@
 # Seed Meta-Harness
 
-A portable, agent-agnostic collection of engineering practices, canonical definitions, and validated harness-specific reference implementations. Codex is an initial consumer, not the source of truth.
+Portable engineering capabilities for agent-assisted software development.
+**OpenCode is the executable canon and source of truth.** Codex is a reference adapter.
 
-## Propósito
+## Architecture
 
-El Meta-Harness estandariza el conocimiento compartido y ofrece prácticas de ingeniería reutilizables, sin imponer una única forma de desarrollar software.
+- Seven roles: Orchestrator is the primary agent; Explorer, Planner, Builder, Reviewer,
+  Archivist and Maintainer are independent subagents with bounded contexts and configurable models.
+- Markdown documentation, agent definitions, skills and spec artifacts must remain
+  at or below 400 lines per file. Split larger content into linked supporting files;
+  automatic limit enforcement belongs to the future plugin.
+- A future deterministic SDD plugin checks required artifact existence, workflow
+  state and authorization. Agents and humans assess content. No such enforcement
+  is implemented yet.
+- At most one active change per feature branch. Active artifacts can travel in Git;
+  archives are local and main must not receive active changes. Enforcement is pending.
+- OKF 0.2 is for curated project documentation; Engram is for operational learnings.
+  Project MCP configuration and operational guides are available; the OKF bundle
+  and remote memory synchronization are not implemented here yet.
+- OKF and Engram are shared foundations. SDD and subagents are optional capabilities
+  for consuming projects. CodeGraph and Plane are optional integrations.
+- Adoption is modular; consumers need not replace their existing development workflow.
 
-Esto permite mantener una base común en el equipo, respetar los flujos maduros que ya funcionan y adoptar nuevas capacidades de manera gradual, según las necesidades de cada proyecto.
+## OpenCode canon (MHSDD-2)
 
-La fuente canónica se mantiene en `.agents/`. OKF 0.2 y Engram forman la base compartida para los proyectos que adopten el estándar; SDD, los subagentes y las integraciones adicionales se adoptan de forma modular. Las implementaciones de referencia para Codex, OpenCode y otros entornos deberán mantenerse vinculadas y verificadas contra el canon.
+`.opencode/agents/` contains the seven native Markdown agent definitions.
+`.opencode/workflow.md` defines the heavy SDD route, persistent handoffs, approvals,
+commit boundary and closure contract. Maintainer defines bounded light-route work;
+its persistent recovery, knowledge receipts and controller gates remain pending.
+Planner uses task-breakdown; Reviewer uses security-review from `.opencode/skills/`.
+The existing agent contracts and skill were reused, with native YAML metadata added.
+The previous `.agents/` definitions have been migrated, not maintained as a second canon.
 
-## Architectural principles
+The project entry configuration is `opencode.json`, with
+`default_agent: "orchestrator"`. Start `opencode` in this repository to use it.
+Agent files set primary/subagent mode explicitly. Orchestrator's task permission
+allows only the six project specialists; each specialist denies further delegation.
+Reviewer denies shell execution and edits except review.md and memory.md under
+Specs/Open. Restriction to the currently assigned spec remains behavioral until
+controller support exists. These tool restrictions are not
+the future SDD state machine and do not guarantee filesystem isolation.
 
-- **Isolated agents:** Orchestrator, Explorer, Planner, Builder, Reviewer, and Archivist are separate agents with independently configurable models and contexts.
-- **Deterministic SDD transitions:** an external plugin gates progress by required artifact **existence**, workflow state, and human approval; it does **not** judge artifact content.
-- **Branch-scoped work:** at most one active spec per feature branch. Active artifacts may travel in that branch; archived artifacts are not tracked in Git. `main` must not receive active specs.
-- **Distinct knowledge systems:** OKF 0.2 for curated living project documentation; Engram for development learnings, errors, and gotchas; SDD artifacts for temporary feature execution.
-- **Reconstructible code navigation:** CodeGraph may support local exploration without an always-on watcher/daemon, but it must not be required in cloud.
-- **Portability first:** no optional MCP, task manager, or external persistence service may become a prerequisite for the core SDD workflow.
+Models are deliberately not pinned to a provider or account. To override a role,
+set `model: provider/model-id` in its agent frontmatter. The primary agent uses the
+configured session model; specialists inherit it unless overridden. Provider-specific
+reasoning settings must match the chosen model. Actual model overrides remain untested.
+
+Earlier discovery checks with OpenCode **1.15.3**, before the latest workflow and
+Reviewer-permission changes (not repeated; runtime checks are reserved for the user):
+- `opencode agent list` discovers Orchestrator as primary and the five specialists as subagents.
+- `opencode debug config` resolves the default agent to Orchestrator.
+- `opencode debug agent <name>` loads all six prompts and their task permissions;
+  Reviewer then resolved full edit denial; its new scoped writes are not runtime-tested.
+- `opencode debug skill` resolves task-breakdown to its canonical OpenCode path.
+
+Not yet verified: model-backed delegation, actual separate child contexts, per-role
+model/effort overrides, behavioral permission enforcement and the complete SDD cycle.
+An earlier model-backed smoke test was rejected by automatic approval review because it
+could transmit repository instructions/metadata to an external configured provider
+without explicit approval of destination and payload. No model request was executed.
+No OpenCode commands or model tests were run for the current workflow implementation
+or the new Maintainer. Historical discovery covered the original six agents only.
+Both skills pass structural validation; agent/config syntax and local links are
+checked statically. These checks do not prove runtime permission enforcement.
+
+Heavy changes use Specs/Open/<spec> with Exploration.md, proposal.md, design.md,
+tasks.md, implementation.md, review.md and memory.md. Planner persists proposal
+before asking questions; Builder and Reviewer persist progress before returning.
+Plan and final changes require separate explicit human approvals. Archivist prepares
+OKF before final approval; the approved local commit excludes spec artifacts.
+Engram persistence follows the successful commit and includes its hash, before
+mechanical archival to Specs/Archived/<spec>. There is no automatic push or deployment.
+The plugin, Git-index cleanup and automated knowledge lifecycle remain contracts.
+The Engram MCP connection is configured; its persistence behavior awaits user testing.
+
+## Codex adaptation
+
+`.codex/` is preserved. Its seven TOML files reference the OpenCode canon's Markdown
+bodies, without treating OpenCode YAML as Codex settings. `.codex/orchestrator.md`
+remains an opt-in primary-session adapter. The universal `AGENTS.md` does not
+automatically activate it. Native OpenCode task/skill calls need Codex equivalents;
+model IDs, reasoning settings and permissions are runtime-specific. Full adaptation
+and fresh-session behavior are pending.
+In particular, Codex Reviewer's read-only sandbox cannot yet write the mandatory
+review artifacts; the adapter reports this mismatch rather than weakening permissions.
+
+## Tool setup (MHSDD-3)
+
+The repository configures Engram, CodeGraph and hosted Plane in `opencode.json`.
+Engram is required for adoption; consumers choose whether to use CodeGraph and
+Plane. See [Windows installation and first start](docs/tools/windows.md) and the
+[descriptive JSON inventory](.opencode/tools/catalog.json). GitHub MCP remains optional.
+CodeGraph 1.6.2 disables daemon and watcher here, but retains connection-time
+catch-up; subsequent refresh guidance is `codegraph sync --quiet`.
+Functional acceptance is performed by the user in a separate OpenCode terminal.
 
 ## Project tracking
 
-Architecture and staged implementation tasks are maintained in [Plane — Meta-Harness SDD](https://app.plane.so/icondor/projects/1d47b74b-6a73-444e-9b72-434d62d9a62c/).
+Architecture and implementation tasks:
+[Plane — Meta-Harness SDD](https://app.plane.so/icondor/projects/1d47b74b-6a73-444e-9b72-434d62d9a62c/).
 
-Project work and its current status are tracked in Plane. The canonical specification remains independent of any single runtime.
+Official references:
+[Agents](https://opencode.ai/docs/agents/),
+[configuration](https://opencode.ai/docs/config/),
+[skills](https://opencode.ai/docs/skills/).
+
+MHSDD-2 establishes the agents and first implementation. The installer, updates,
+Engram synchronization, OKF bundle and deterministic plugin belong to other tasks.
