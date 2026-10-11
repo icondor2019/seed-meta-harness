@@ -1,4 +1,31 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "default_agent": "orchestrator"
+  "default_agent": "orchestrator",
+  "mcp": {
+    "engram": {
+      "type": "local",
+      "command": ["engram", "mcp", "--tools=agent"],
+      "enabled": true
+    },
+    "codegraph": {
+      "type": "local",
+      "command": ["codegraph", "serve", "--mcp", "--no-watch"],
+      "environment": {
+        "CODEGRAPH_NO_DAEMON": "1",
+        "CODEGRAPH_NO_WATCH": "1"
+      },
+      "enabled": true,
+      "timeout": 30000
+    },
+    "plane": {
+      "type": "remote",
+      "url": "https://mcp.plane.so/http/api-key/mcp",
+      "oauth": false,
+      "headers": {
+        "Authorization": "Bearer {env:PLANE_PAT}",
+        "x-workspace-slug": "{env:PLANE_WORKSPACE_SLUG}"
+      },
+      "enabled": true
+    }
+  }
 }

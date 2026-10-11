@@ -1,0 +1,73 @@
+{
+  "format_version": 1,
+  "kind": "descriptive-tool-catalog",
+  "native_configuration": "../../opencode.json",
+  "tools": [
+    {
+      "id": "engram",
+      "purpose": "Persistent operational memory",
+      "required_for_adoption": true,
+      "selected_here": true,
+      "transport": "stdio",
+      "command": ["engram", "mcp", "--tools=agent"],
+      "prerequisites": ["Windows binary on PATH"],
+      "source": "https://github.com/Gentleman-Programming/engram",
+      "installation": "Download and extract the official Windows release; add its folder to PATH",
+      "guide": "../../docs/tools/windows.md#engram",
+      "local_evidence": "CLI help reported 1.15.1; MCP functional verification pending user test"
+    },
+    {
+      "id": "codegraph",
+      "purpose": "Local repository knowledge graph",
+      "required_for_adoption": false,
+      "selected_here": true,
+      "transport": "stdio",
+      "command": ["codegraph", "serve", "--mcp", "--no-watch"],
+      "environment": {"CODEGRAPH_NO_DAEMON": "1", "CODEGRAPH_NO_WATCH": "1"},
+      "prerequisites": ["npm installation route: Node.js and npm", "Initial per-repository index"],
+      "source": "https://github.com/colbymchenry/codegraph",
+      "installation": "npm.cmd install -g @colbymchenry/codegraph@1.6.2",
+      "initialization": "codegraph init",
+      "manual_refresh": "codegraph sync --quiet",
+      "startup_exception": "1.6.2 performs connect-time catch-up even with daemon and watcher disabled",
+      "guide": "../../docs/tools/windows.md#codegraph",
+      "local_evidence": "npm installed 1.6.2; installed source inspected; runtime verification pending user test"
+    },
+    {
+      "id": "plane",
+      "purpose": "Project work tracking",
+      "required_for_adoption": false,
+      "selected_here": true,
+      "transport": "streamable-http",
+      "url": "https://mcp.plane.so/http/api-key/mcp",
+      "required_environment": ["PLANE_PAT", "PLANE_WORKSPACE_SLUG"],
+      "prerequisites": ["Plane account and workspace access", "HTTPS network access"],
+      "source": "https://developers.plane.so/dev-tools/mcp-server",
+      "installation": "No local server required for hosted PAT transport",
+      "guide": "../../docs/tools/windows.md#plane",
+      "local_evidence": "Codex connector available; separate OpenCode credentials and connection still require user setup/test"
+    },
+    {
+      "id": "git",
+      "purpose": "Local version control",
+      "required_for_adoption": false,
+      "selected_here": true,
+      "transport": "cli",
+      "source": "https://git-scm.com/download/win",
+      "prerequisites": ["Git on PATH"],
+      "installation": "Official Git for Windows installer",
+      "local_evidence": "Existing repository and branch operations succeeded"
+    },
+    {
+      "id": "github",
+      "purpose": "Optional hosted repository integration",
+      "required_for_adoption": false,
+      "selected_here": false,
+      "transport": "runtime-specific",
+      "source": "https://github.com/github/github-mcp-server",
+      "installation": "Configure only when selected by the consuming project",
+      "prerequisites": ["GitHub credentials and repository access"],
+      "local_evidence": "No project-native MCP configuration added"
+    }
+  ]
+}

@@ -3,3 +3,8 @@
 
 # Archived SDD execution artifacts remain local.
 /Specs/Archived/
+
+# Rebuildable CodeGraph index and local credentials.
+.codegraph/
+.env
+.env.local

@@ -17,4 +17,14 @@ Architecture and staged implementation tasks are maintained in [Plane — Meta-H
 
 Initial work starts with **MHSDD-11** (verify Codex runtime capabilities), followed by **MHSDD-2** (define the agent contracts) and **MHSDD-4** (deterministic workflow plugin).
 
-> Status: architecture baseline only. No agent definitions, installer, MCP configuration, or SDD implementation have been shipped yet.
+> MCP status: project configuration and Windows setup guides are available (MHSDD-3); the user confirmed OpenCode loads files, agents and MCPs. Other implementation status is maintained separately.
+
+## Tool setup (MHSDD-3)
+
+The repository configures Engram, CodeGraph and hosted Plane in `opencode.json`.
+Engram is required for adoption; consumers choose whether to use CodeGraph and
+Plane. See [Windows installation and first start](docs/tools/windows.md) and the
+[descriptive JSON inventory](.opencode/tools/catalog.json). GitHub MCP remains optional.
+CodeGraph 1.6.2 disables daemon and watcher here, but retains connection-time
+catch-up; subsequent refresh guidance is `codegraph sync --quiet`.
+Functional acceptance is performed by the user in a separate OpenCode terminal.
