@@ -1,7 +1,7 @@
 ---
 description: Independently review implementation against the approved plan.
 mode: subagent
-# Optional per-role model override: provider/model-id (otherwise inherited).
+model: opencode-go/kimi-k2.7-code
 permission:
   task: deny
   edit:
