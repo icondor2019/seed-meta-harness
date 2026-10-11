@@ -1,7 +1,7 @@
 ---
 description: Implement approved tasks and report validation and blockers.
 mode: subagent
-# Optional per-role model override: provider/model-id (otherwise inherited).
+model: opencode-go/kimi-k2.7-code
 permission:
   task: deny
   webfetch: deny

@@ -1,7 +1,7 @@
 ---
 description: Investigate current behavior and produce evidence in Exploration.md.
 mode: subagent
-# Optional per-role model override: provider/model-id (otherwise inherited).
+model: opencode-go/mimo-v2.5
 permission:
   task: deny
 ---

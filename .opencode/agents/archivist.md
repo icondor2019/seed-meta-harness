@@ -1,7 +1,7 @@
 ---
 description: Prepare authorized closure and classify lasting knowledge.
 mode: subagent
-# Optional per-role model override: provider/model-id (otherwise inherited).
+model: opencode-go/mimo-v2.5
 permission:
   task: deny
 ---
