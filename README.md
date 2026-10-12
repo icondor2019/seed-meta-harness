@@ -9,12 +9,12 @@ Portable engineering capabilities for agent-assisted software development.
   Archivist and Maintainer are independent subagents with bounded contexts and configurable models.
 - Markdown documentation, agent definitions, skills and spec artifacts must remain
   at or below 400 lines per file. Split larger content into linked supporting files;
-  automatic limit enforcement belongs to the future plugin.
-- A future deterministic SDD plugin checks required artifact existence, workflow
-  state and authorization. Agents and humans assess content. No such enforcement
-  is implemented yet.
+  the controller checks the mechanical limit at gated operations.
+- The deterministic OpenCode SDD plugin checks required artifact existence, workflow
+  state and authorization. Agents and humans assess content. See the
+  [implemented controller and its limits](docs/sdd-plugin.md).
 - At most one active change per feature branch. Active artifacts can travel in Git;
-  archives are local and main must not receive active changes. Enforcement is pending.
+  archives are local and main must not receive active changes. Specs remain local and excluded from Git.
 - OKF 0.2 is for curated project documentation; Engram is for operational learnings.
   Project MCP configuration and operational guides are available; the OKF bundle
   and remote memory synchronization are not implemented here yet.
@@ -25,8 +25,8 @@ Portable engineering capabilities for agent-assisted software development.
 ## OpenCode canon (MHSDD-2)
 
 `.opencode/agents/` contains the seven native Markdown agent definitions.
-`.opencode/workflow.md` defines the heavy SDD route, persistent handoffs, approvals,
-commit boundary and closure contract. Maintainer defines bounded light-route work;
+`docs/workflow.md` defines the heavy SDD route, persistent handoffs, approvals,
+context boundaries and closure contract. Maintainer defines bounded light-route work;
 its persistent recovery, knowledge receipts and controller gates remain pending.
 Planner uses task-breakdown; Reviewer uses security-review from `.opencode/skills/`.
 The existing agent contracts and skill were reused, with native YAML metadata added.
@@ -37,9 +37,9 @@ The project entry configuration is `opencode.json`, with
 Agent files set primary/subagent mode explicitly. Orchestrator's task permission
 allows only the six project specialists; each specialist denies further delegation.
 Reviewer denies shell execution and edits except review.md and memory.md under
-Specs/Open. Restriction to the currently assigned spec remains behavioral until
+specs/open. Restriction to the currently assigned spec remains behavioral until
 controller support exists. These tool restrictions are not
-the future SDD state machine and do not guarantee filesystem isolation.
+the SDD controller's operation gates and do not guarantee filesystem isolation.
 
 Models are deliberately not pinned to a provider or account. To override a role,
 set `model: provider/model-id` in its agent frontmatter. The primary agent uses the
@@ -64,14 +64,15 @@ or the new Maintainer. Historical discovery covered the original six agents only
 Both skills pass structural validation; agent/config syntax and local links are
 checked statically. These checks do not prove runtime permission enforcement.
 
-Heavy changes use Specs/Open/<spec> with Exploration.md, proposal.md, design.md,
+Heavy changes use specs/open/<spec> with exploration.md, proposal.md, design.md,
 tasks.md, implementation.md, review.md and memory.md. Planner persists proposal
 before asking questions; Builder and Reviewer persist progress before returning.
-Plan and final changes require separate explicit human approvals. Archivist prepares
-OKF before final approval; the approved local commit excludes spec artifacts.
-Engram persistence follows the successful commit and includes its hash, before
-mechanical archival to Specs/Archived/<spec>. There is no automatic push or deployment.
-The plugin, Git-index cleanup and automated knowledge lifecycle remain contracts.
+Plan and implementation require separate textual human approvals. Archivist starts
+only after implementation approval and proposes knowledge before permanent writes.
+New knowledge needs exact textual candidate selection. Archivist persists only the
+approved candidates, without Git/commit references; Orchestrator requests mechanical
+archival to specs/archived/<spec>. Git is a separate user-requested operation. There is no automatic push or deployment.
+The plugin implements gates and archival; Archivist supplies per-candidate memory receipts.
 The Engram MCP connection is configured; its persistence behavior awaits user testing.
 
 ## Codex adaptation
@@ -105,5 +106,19 @@ Official references:
 [configuration](https://opencode.ai/docs/config/),
 [skills](https://opencode.ai/docs/skills/).
 
-MHSDD-2 establishes the agents and first implementation. The installer, updates,
-Engram synchronization, OKF bundle and deterministic plugin belong to other tasks.
+MHSDD-2 establishes the agents and first implementation; MHSDD-4 adds the controller.
+The installer, updates, Engram synchronization and OKF bundle belong to other tasks.
+
+## Deterministic SDD controller (MHSDD-4)
+
+The auto-discovered OpenCode plugin exposes the sdd tool. All spec paths and
+artifacts use lowercase. Human approval is ordinary user text in the conversation.
+Native /sdd-status reads metadata directly without a model. There are no hash gates. See [operations, recovery and validation](docs/sdd-plugin.md).
+
+Automated tests exercise local lifecycle and negative gates in disposable Git
+repositories. A model-backed OpenCode conversation and the real human approval
+interaction still need user acceptance; API loading alone is not that acceptance.
+
+Repeatable capability scenarios and execution evidence are indexed in
+[the capability test catalog](tests/capabilities/README.md). The MHSDD-4 interactive
+initial interactive attempt failed; corrected behavior awaits a repeated acceptance run.

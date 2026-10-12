@@ -5,7 +5,9 @@ Las pruebas automáticas del controlador permanecen en `../sdd/`.
 
 | Capacidad | Estado | Escenario | Ejecución |
 | --- | --- | --- | --- |
-| Ciclo SDD en OpenCode | fallida inicialmente; repetición corregida pendiente | [Procedimiento](sdd-lifecycle/scenario.md) | [Intento original](sdd-lifecycle/runs/2026-10-11-mhsdd-4-acceptance.md), [correcciones](../../docs/sdd-validation.md) |
+| Ciclo SDD anterior (v2) | comprobada (repetición corregida completada 2026-10-11; commit documental pendiente) | [Procedimiento](sdd-lifecycle/scenario.md) | [Intento original](sdd-lifecycle/runs/2026-10-11-mhsdd-4-acceptance.md), [repetición corregida](sdd-lifecycle/runs/2026-10-11-mhsdd-4-acceptance-repeat-1.md) |
+
+| Ciclo SDD simplificado (v3) | comprobada parcialmente (22 pruebas automáticas; nueva aceptación dispensada por el usuario para esta entrega) | [Procedimiento](sdd-lifecycle/scenario.md) | Sin ejecución nueva |
 
 Estados: pendiente, comprobada parcialmente, comprobada, fallida. Un procedimiento
 escrito o una ejecución bloqueada no acreditan una capacidad comprobada.

@@ -1,53 +1,49 @@
 # Seed Meta-Harness
 
-Portable engineering capabilities for agent-assisted software development.
-Repository overview and documentation status: `README.md`.
-`.opencode/` contains the executable canon; `.codex/` contains the Codex adaptation.
-OKF 0.2 is the intended curated documentation format; its bundle is not created yet.
-Knowledge and memory are shared foundations; SDD and subagents can be adopted modularly.
-Discover the capability relevant to the current request; reading this file does not
-automatically assign the Orchestrator role.
+Portable engineering capabilities. `.opencode/` is the executable OpenCode canon;
+`.codex/` is its adaptation. OpenCode loads the selected role's system prompt from
+`.opencode/agents/`. This shared file does not assign Orchestrator to other runtimes.
 
-Mandatory documentation limit: 400 lines per Markdown file, including this file,
-agent definitions, skills, project documentation and spec artifacts. Split larger
-documents into linked supporting files without dropping evidence or required entries.
-CodeGraph is optional: use it when available in the execution environment; otherwise
-use repository-native tools. Agent roles and routing: `.opencode/workflow.md`.
+## Execution contract
 
-## Tools and first start (Windows)
+The SDD controller is the sole authority for current state and authorization.
+Artifacts contain work, evidence and recovery notes; historical stage logs and
+checkboxes never establish gates. Never edit controller metadata to bypass them.
+Each specialist already knows its deterministic inputs/outputs under
+`specs/open/<spec>/`; archive is `specs/archived/<spec>/`. Use lowercase artifact
+names. One spec may be open; preserve existing work and unrelated changes.
 
-Engram is required for adoption; CodeGraph and Plane are selectable by consumers.
-This repository enables all three in `opencode.json`. Git is a local prerequisite;
-GitHub MCP is optional. Inventory: `.opencode/tools/catalog.json`.
+Orchestrator routes and coordinates with minimal context. Its loaded contract
+contains Maintainer/SDD routing and plugin operations. An explicit SDD start request
+requires clarified intent, then create and the returned assignment or blocking reason.
+Do not investigate infrastructure, reports or memory merely to start. Local changes
+and absence of a PR do not block creation. The plugin validates branch and open spec.
+Each delegation explains why called, where the work stands and what to do. Explorer
+receives broad initial context; subsequent roles receive concise evolution and use
+their deterministic artifacts. No raw-document handoff substitutes for context.
+Specialists execute their authorized assignment from their own artifacts; they do
+not reconstruct workflow state or reload another role contract. Report concerns to
+Orchestrator; only a material impediment blocks the assignment.
+
+Plan and implementation require explicit user approval in ordinary conversation.
+Reviewer pass does not authorize commit or Archivist. New permanent knowledge also
+requires approval before publication. Only Archivist persists the exact selected
+candidates in Engram, independently of Git. No commit references or SHA belong in
+Engram entries. Git is separate and user-requested. No human approval commands,
+content-hash gates, automatic push, merge or deployment.
+
+## Shared limits and optional references
+
+Every Markdown file must be at most 400 lines. Split linked supporting files without
+losing evidence. Preserve user configuration and unrelated changes. Use explicit
+approved paths for commits; never stage the whole repository implicitly.
+
+Tools and skills load only when relevant to the assigned operation, not as a universal
+preflight. CodeGraph is optional; use repository-native tools if unavailable. Engram
+is the adoption memory foundation; CodeGraph and Plane are selectable integrations.
+No CodeGraph hooks, scheduled jobs or automatic sync integrations.
+
 Installation and troubleshooting: [Windows setup](docs/tools/windows.md).
-
-Install missing tools only; preserve existing user configuration:
-
-```powershell
-# Engram: download the Windows release binary, extract and add its folder to PATH:
-# https://github.com/Gentleman-Programming/engram/releases
-# CodeGraph (Node/npm already installed):
-npm.cmd install -g @colbymchenry/codegraph@1.6.2
-# OpenCode runtime, only if missing:
-npm.cmd install -g opencode-ai
-```
-
-Open a new terminal in the repository after changing PATH. Before first launch,
-follow the setup guide to supply `PLANE_PAT` and `PLANE_WORKSPACE_SLUG` in that
-terminal. OpenCode does not automatically load a `.env` file.
-
-```powershell
-$env:CODEGRAPH_NO_DAEMON = '1'
-$env:CODEGRAPH_NO_WATCH = '1'
-# First-time bootstrap only (builds the initial index):
-codegraph init
-# Subsequent refreshes, explicitly by human or agent:
-codegraph sync --quiet
-opencode
-```
-
-Do not install CodeGraph hooks, scheduled jobs or automatic sync integrations.
-The configured MCP disables daemon and watcher; version 1.6.2 still reconciles
-the index on connection. See the guide for this exception and Windows windows/logs.
-Load `.opencode/skills/codegraph-usage/SKILL.md` for graph exploration and
-`.opencode/skills/engram-usage/SKILL.md` for persistent operational memory.
+Overview: README.md. Detailed workflow/plugin documentation is reference material,
+not mandatory startup reading. OKF methodology documentation and remote memory
+synchronization are outside the current implementation.

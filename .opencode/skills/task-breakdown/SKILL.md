@@ -6,12 +6,12 @@ description: Create or revise tasks.md from a proposal, design and acceptance cr
 # Task breakdown
 
 Execute within the Planner's independent context, without creating another agent.
-Read [the shared workflow](../../workflow.md) for persistence, approvals and state authority.
+Use the Planner role contract for persistence, approvals and state authority.
 Runtime adapters own tool selection, model settings and plugin commands.
 
 ## Inputs
 
-Read the assigned proposal.md, design.md, acceptance criteria, relevant Exploration.md
+Read the assigned proposal.md, design.md, acceptance criteria, relevant exploration.md
 findings and existing tasks.md. Use the change directory and permitted output paths
 provided by Orchestrator. Additional artifacts are inputs only when the configured
 workflow requires them.
@@ -20,6 +20,10 @@ Planner must already have persisted proposal.md before this skill returns any
 questions. Record unresolved requirements or design decisions there with stable
 question IDs, then return them through Orchestrator. Do not invent scope or
 disguise an unresolved design decision as an implementation task.
+
+design.md covers UI/frontend only. Without UI/frontend changes it contains only:
+“No aplica: este cambio no incluye UI/frontend”. Technical architecture and interfaces
+belong in proposal.md; do not add frontend tasks or checks when they do not apply.
 
 ## Build the checklist
 
@@ -81,7 +85,7 @@ Builder or Reviewer to discover it independently.
 
 ## Persist and return
 
-Write tasks.md to the assigned Specs/Open/<spec>/ directory. SDD artifacts stay in the change workspace;
+Write tasks.md to the assigned specs/open/<spec>/ directory. SDD artifacts stay in the change workspace;
 do not promote them to operational memory or curated documentation.
 Return completed, blocked or failed for the assignment, artifact path, coverage and
 dependency summary, unresolved questions, and revision impacts when applicable.
@@ -90,8 +94,8 @@ Do not dispatch Builder, choose the next stage, register approval or directly ed
 authoritative workflow state. Execute only plugin operations supplied for the
 assignment and return their results. Orchestrator coordinates the next allowed step.
 The plugin checks artifact existence, state and authorization; agents and humans
-review checklist meaning and quality. Until the plugin exists, explicitly report
-enforcement unavailable rather than fabricate plugin results.
+review checklist meaning and quality. Return concrete blockers without investigating
+the controller or reconstructing its workflow.
 
 ## Inspiration
 
