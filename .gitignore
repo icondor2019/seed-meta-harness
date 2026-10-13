@@ -2,7 +2,7 @@
 /.codex/VALIDATION.md
 
 # Archived SDD execution artifacts remain local.
-/Specs/Archived/
+/specs/archived/
 .opencode_test/
 
 # Rebuildable CodeGraph index and local credentials.

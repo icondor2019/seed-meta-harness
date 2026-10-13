@@ -168,3 +168,43 @@ tested by the implementation agent. The user subsequently confirmed that OpenCod
 opens the files and loads the agents and all three MCPs correctly. Memory
 persistence, manual refresh and process cleanup were not separately reported.
 No credentials were requested, printed or copied from existing user settings.
+
+## Repository bootstrap reference
+
+Moved from AGENTS.md to keep normal agent startup small. Consult this section only
+for initial setup or a concrete tool failure; it is not an SDD preflight.
+
+
+Engram is required for adoption; CodeGraph and Plane are selectable by consumers.
+This repository enables all three in `opencode.json`. Git is a local prerequisite;
+GitHub MCP is optional. Inventory: [catalog.json](../../.opencode/tools/catalog.json).
+
+Install missing tools only; preserve existing user configuration:
+
+```powershell
+# Engram: download the Windows release binary, extract and add its folder to PATH:
+# https://github.com/Gentleman-Programming/engram/releases
+# CodeGraph (Node/npm already installed):
+npm.cmd install -g @colbymchenry/codegraph@1.6.2
+# OpenCode runtime, only if missing:
+npm.cmd install -g opencode-ai
+```
+
+Open a new terminal in the repository after changing PATH. Before first launch,
+follow the setup guide to supply `PLANE_PAT` and `PLANE_WORKSPACE_SLUG` in that
+terminal. OpenCode does not automatically load a `.env` file.
+
+```powershell
+$env:CODEGRAPH_NO_DAEMON = '1'
+$env:CODEGRAPH_NO_WATCH = '1'
+# First-time bootstrap only (builds the initial index):
+codegraph init
+# Subsequent refreshes, explicitly by human or agent:
+codegraph sync --quiet
+opencode
+```
+
+Do not install CodeGraph hooks, scheduled jobs or automatic sync integrations.
+The configured MCP disables daemon and watcher; version 1.6.2 still reconciles
+the index on connection. See the guide for this exception and Windows windows/logs.
+Load the relevant tool skill only when actually using that capability.

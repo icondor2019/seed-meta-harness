@@ -11,11 +11,14 @@ as historical evidence and verify it against the current repository when necessa
 
 Save reusable debugging findings, gotchas and decision rationale with a concise
 title, project identity and enough context to explain what happened, why and the
-evidence. Prefer updating an existing topic to duplicating the same finding.
+evidence. During candidate curation, identify existing topics to avoid proposing duplicates.
+After approval save only the exact selected content, without further reformulation.
 Never save credentials, full transcripts or entire SDD artifacts.
 
 Follow the current role contract: in this repository Archivist persists selected
 knowledge; other specialists record candidates in their assigned memory.md.
+User selection authorizes only the exact candidates selected. No commit, SHA or Git
+reference belongs in Engram content. Record each returned ID before the next save.
 This skill does not authorize otherwise prohibited writes or change workflow gates.
 
 Keep current architecture and setup documentation in curated project docs; keep
