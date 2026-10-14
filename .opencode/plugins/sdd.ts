@@ -8,18 +8,22 @@ export const SddPlugin: Plugin = async (project) => ({
       description: 'Deterministic SDD. After clarifying user intent, start with action=create, input={id:"lowercase-kebab-case",title:"User objective"}. Success returns next.agent=explorer; delegate immediately. A rejected call reports its reason without authorizing work. No PR or clean-tree prerequisite. Record explicit conversational user approval with approve.',
       args: {
         action: tool.schema.enum(['create','status','validate','migrate','handoff','report','concern','answer','transition','replan','correct',
-          'request_approval','approve','review','prepare_closure','memory','archive']),
+          'request_approval','approve','review','prepare_closure','okf','memory','archive']),
         input: tool.schema.object({
           id: tool.schema.string().describe('create: required lowercase-kebab-case spec ID; concern/answer: concern ID').optional(),
           title: tool.schema.string().describe('create: required user objective').optional(),
           to: tool.schema.enum(['planning','plan_pending_approval','ready_for_review','reviewing']).describe('transition: required destination').optional(),
           files: tool.schema.array(tool.schema.string()).describe('transition to ready_for_review: implementation paths').optional(),
-          agent: tool.schema.enum(['explorer','planner','builder','reviewer','archivist']).describe('handoff: assigned specialist').optional(),
+          agent: tool.schema.enum(['explorer','planner','builder','reviewer','archivist','knowledge-curator']).describe('handoff: assigned specialist').optional(),
           note: tool.schema.string().describe('handoff: complete coordinator invocation, preserved verbatim').optional(),
           decision: tool.schema.enum(['accept','reject']).describe('approve: explicit human decision; runtime supplies actual user message').optional(),
           verdict: tool.schema.enum(['pass','changes-required']).describe('review: Reviewer verdict').optional(),
           candidates: tool.schema.array(tool.schema.object({id:tool.schema.string(),content:tool.schema.string()}).strict()).describe('prepare_closure: recommendations with stable IDs and exact Engram content').optional(),
           selected: tool.schema.array(tool.schema.string()).describe('approve knowledge: exact user-selected candidate IDs, including [] when none').optional(),
+          okfUpdates: tool.schema.array(tool.schema.object({id:tool.schema.string(),content:tool.schema.string(),files:tool.schema.array(tool.schema.string())}).strict()).describe('prepare_closure: concrete OKF proposals with exact knowledge/ destinations; [] requires okfReason').optional(),
+          selectedOkf: tool.schema.array(tool.schema.string()).describe('approve knowledge: explicit selected OKF IDs, including []').optional(),
+          okfReason: tool.schema.string().describe('Reason for no OKF updates or empty OKF selection').optional(),
+          okfReceipts: tool.schema.array(tool.schema.object({update:tool.schema.string(),files:tool.schema.array(tool.schema.string()),evidence:tool.schema.string()}).strict()).describe('okf: completed approved update paths and actual validation evidence').optional(),
           reason: tool.schema.string().describe('No candidates/empty selection: rationale').optional(),
           receipts: tool.schema.array(tool.schema.object({candidate:tool.schema.string(),observation:tool.schema.string()}).strict()).describe('memory: real Engram ID per approved candidate; record each success immediately').optional(),
           result: tool.schema.enum(['completed','blocked','interrupted']).describe('optional concern report: outcome').optional(),
@@ -52,12 +56,17 @@ export const SddPlugin: Plugin = async (project) => ({
         if(input.tool==='apply_patch') throw Error('Archivist uses write/edit with explicit approved paths');
         await authorizePersistence(project.worktree,actor,'documentation',output.args.filePath??'');
       }
+      else if(actor==='knowledge-curator') {
+        if(input.tool==='apply_patch') throw Error('Knowledge Curator uses write/edit with explicit paths');
+        try {await authorizePersistence(project.worktree,actor,'okf',output.args.filePath??'');}
+        catch(e) {if(e.message!=='No active spec') throw e;}
+      }
     }
     if(input.tool==='task') {
       const agent=output.args.subagent_type;
-      if(['explorer','planner','builder','reviewer','archivist','maintainer'].includes(agent)) {
+      if(['explorer','planner','builder','reviewer','archivist','maintainer','knowledge-curator'].includes(agent)) {
         try {await dispatch(project.worktree,agent);}
-        catch(e) {if(agent==='maintainer'&&e.message==='No active spec') return;throw e;}
+        catch(e) {if(['maintainer','knowledge-curator'].includes(agent)&&e.message==='No active spec') return;throw e;}
       }
     }
     if(input.tool==='read') {

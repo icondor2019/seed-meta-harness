@@ -33,8 +33,9 @@ Specialists know their artifact conventions under specs/open/<spec>/.
 | ready_for_review | Orchestrator | transition {to:"reviewing"} |
 | reviewing | Reviewer | review {verdict:"pass" or "changes-required"} |
 | changes_pending_approval | Orchestrator/user | request_approval; approve {decision} |
-| preparing_closure | Archivist first pass | prepare_closure {candidates:[{id,content}]} |
-| knowledge_pending_approval | Orchestrator/user | request_approval; approve {decision,selected:[IDs]} |
+| preparing_closure | Archivist first pass | prepare_closure {candidates,okfUpdates,reason?,okfReason?} |
+| knowledge_pending_approval | Orchestrator/user | request_approval; approve {decision,selected,selectedOkf,reason?,okfReason?} |
+| persisting_knowledge | Knowledge Curator | okf {okfReceipts:[{update,files,evidence}]} |
 | persisting_memory | Archivist second pass | memory {receipts:[{candidate,observation}]} |
 | archiving | Orchestrator | archive |
 
@@ -54,10 +55,19 @@ receipts are rejected. Orchestrator interprets intent; the plugin does not parse
 natural language. A receipt proves message identity, not semantic interpretation.
 
 Reviewer pass leads to human implementation acceptance before Archivist starts.
-Archivist proposes exact candidates with stable IDs in memory.md and registers them.
-User chooses an explicit subset: selected IDs are recorded with the approval receipt.
-An empty selection needs reason. Empty proposal needs reason and proceeds without
-another approval or any Engram write. Unselected content is never authorized.
+Archivist curates exact Engram candidates in memory.md and OKF proposals in
+okf-update.md. prepare_closure registers both lists: candidates:[{id,content}] and
+okfUpdates:[{id,content,files}], with exact exclusive knowledge/ Markdown destinations.
+Empty lists require reason and okfReason respectively. Only when both lists are empty
+does closure proceed without another approval or writes. Otherwise user approval
+records explicit selected and selectedOkf subsets, including empty lists and reasons.
+Unselected content is never authorized.
+
+Selected OKF updates enter persisting_knowledge first. Knowledge Curator writes pending
+approved paths and records okfReceipts:[{update,files,evidence}] incrementally. Receipt
+paths must match the proposal and exist; content quality is assessed by the agent/user,
+not parsed by the controller. Failed or incomplete updates block archival. After OKF
+completes or has a justified no-write outcome, any selected Engram work proceeds.
 
 Second pass reads only memory.md proposal/receipts. Save approved content unchanged,
 then record each returned Engram ID immediately via memory. Partial receipts survive
@@ -69,7 +79,9 @@ No external documentation or report consolidation belongs to Archivist.
 If Engram succeeds but its receipt cannot be saved, stop and reconcile the known ID
 before retrying. The controller is not a distributed transaction with Engram and
 cannot promise exactly-once delivery across that crash window. Never blindly resave.
-Once receipts cover all selected IDs, Orchestrator archives mechanically. No Git
+Once both persistence outcomes are recorded, Orchestrator archives mechanically,
+rechecking the existence of receipted OKF files. okf-update.md remains in the spec until
+the entire spec is archived; it is never removed before Knowledge Curator reads it. No Git
 operations or commit prerequisite are exposed; Git is a separate user-requested task.
 
 ## Recovery and limits
@@ -79,6 +91,11 @@ retain historical approvals and previous memory receipts; discard obsolete Git/h
 gates. Completed legacy persistence is never queued again. Without an unambiguous
 candidate selection, return to proposal/selection instead of guessing approval.
 No archived spec is rewritten and no migration runs automatically at startup.
+
+An older version-3 archiving/persisting_memory state without OKF assessment cannot
+complete closure. migrate reopens preparing_closure while preserving memory receipts.
+Archivist assesses OKF and does not requeue already persisted Engram content. Legacy
+versions 1/2 are first upgraded normally, then use this recovery when applicable.
 
 Permission failures, corrupt metadata and failed writes do not advance state. A stale
 .sdd.lock requires checking whether its operation is live before removing it. The

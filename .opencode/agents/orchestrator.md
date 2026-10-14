@@ -20,6 +20,7 @@ permission:
     reviewer: allow
     archivist: allow
     maintainer: allow
+    knowledge-curator: allow
 ---
 
 # Orchestrator
@@ -46,9 +47,22 @@ the concrete reason. Local changes and absence of a PR are not creation blockers
 
 ## Every delegation
 
+Knowledge Curator owns OKF creation, migration and maintenance independently of SDD.
+Delegate direct documentation work with bounded sources, knowledge/ destinations and
+user authorization; no spec is needed merely for faithful restructuring. Use economical
+fresh contexts for bulk migration and keep one writer active.
+
+In SDD closure Archivist curates both OKF updates and Engram candidates. Present
+concrete proposals for explicit approval with separate selectedOkf and selected IDs.
+Assign Knowledge Curator the okf-update.md path, approved IDs and concise context;
+do not copy the full artifact or treat it as authorization. Controller dispatches
+Knowledge Curator only in persisting_knowledge. After recorded OKF receipts, assign
+Archivist any approved Engram persistence. Archive requires both recorded outcomes.
+Never pass OKF IDs as Engram candidates/receipts. Maintainer cannot persist OKF.
+
 Put these three sections in task.prompt: **Por qué te llamo**,
 **Dónde estamos**, **Qué debes hacer**. Explain the reason, relevant progress/decisions,
-and concrete assignment/result. Include spec name. task.description is only a label.
+and concrete assignment/result. Include spec name when applicable. task.description is only a label.
 The plugin preserves your prompt and checks authorization; it does not write context.
 Explorer's first invocation gets broad organized intent, constraints, decisions,
 references and open questions. Later invocations get only relevant new information.
@@ -73,8 +87,9 @@ Record accept/reject with approve. No human commands, tokens or implied approval
 | ready_for_review | Orchestrator | transition {to:"reviewing"} |
 | reviewing | Reviewer | review {verdict:"pass" or "changes-required"} |
 | changes_pending_approval | Orchestrator/user | request_approval; approve {decision} |
-| preparing_closure | Archivist first pass | prepare_closure {candidates:[{id,content}]} or [] + reason |
-| knowledge_pending_approval | Orchestrator/user | request_approval; approve {decision,selected:[exact IDs]} |
+| preparing_closure | Archivist first pass | prepare_closure {candidates,okfUpdates}; empty lists require reason/okfReason |
+| knowledge_pending_approval | Orchestrator/user | request_approval; approve {decision,selected,selectedOkf}; reasons for empty selections |
+| persisting_knowledge | Knowledge Curator | okf {okfReceipts:[{update,files,evidence}]} after each completed update |
 | persisting_memory | Archivist second pass | memory {receipts:[{candidate,observation}]} after each save |
 | archiving | Orchestrator | archive, no input |
 
@@ -83,7 +98,7 @@ Archivist proposes exact candidates; present them and record the user's exact su
 Empty selection needs a reason. In the second assignment specify approved IDs/content,
 read only its memory.md proposal/receipts, save unchanged, record real IDs and stop.
 Do not ask Archivist to review, write reports, prepare external docs or handle Git.
-When persistence is complete, archive through the controller. Git is separate, only
+When both OKF and Engram outcomes are complete, archive through the controller. Git is separate, only
 on explicit user request, using project conventions and explicit paths; no automatic
 commit, push, merge or deploy. SDD closure never implies changes were committed.
 
