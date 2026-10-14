@@ -7,6 +7,19 @@ import { lock, lineCheck } from '../../.opencode/sdd/io.mjs';
 import { fixture, git } from './helpers.mjs';
 const candidates=[{id:'A1',content:'First reusable learning'},{id:'A2',content:'Second reusable learning'}];
 async function ready(f) {await f.plan();await f.review();await f.acceptImplementation();}
+
+test('Archivist can propose OKF only in its own accepted first-pass workspace',async t=>{
+ const f=await fixture(t);
+ const target=path.join(f.dir,'okf-update.md');
+ await assert.rejects(authorizePersistence(f.root,'archivist','documentation',target),/Approved Archivist/);
+ await ready(f);
+ await authorizePersistence(f.root,'archivist','documentation',target);
+ await authorizePersistence(f.root,'archivist','documentation',path.join(f.dir,'memory.md'));
+ await assert.rejects(authorizePersistence(f.root,'archivist','documentation',path.join(f.root,'knowledge/index.md')),/only its own/);
+ await assert.rejects(authorizePersistence(f.root,'archivist','documentation',path.join(f.root,'specs/open/other/okf-update.md')),/only its own/);
+ await f.call('prepare_closure',{candidates},'archivist');
+ await assert.rejects(authorizePersistence(f.root,'archivist','documentation',target),/only its own/);
+});
 async function selected(f,ids=['A2']) {
   await ready(f);await f.call('prepare_closure',{candidates},'archivist');
   await f.call('request_approval');await f.decision('accept','Approve chosen candidates',{selected:ids,reason:'No candidates needed'});

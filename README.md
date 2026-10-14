@@ -5,8 +5,10 @@ Portable engineering capabilities for agent-assisted software development.
 
 ## Architecture
 
-- Seven roles: Orchestrator is the primary agent; Explorer, Planner, Builder, Reviewer,
-  Archivist and Maintainer are independent subagents with bounded contexts and configurable models.
+- Eight roles: Orchestrator is the primary agent; Explorer, Planner, Builder, Reviewer,
+  Archivist, Maintainer and Knowledge Curator are independent subagents with bounded
+  contexts and configurable models. Knowledge Curator owns OKF documentation and
+  can work independently of SDD.
 - Markdown documentation, agent definitions, skills and spec artifacts must remain
   at or below 400 lines per file. Split larger content into linked supporting files;
   the controller checks the mechanical limit at gated operations.
@@ -16,15 +18,17 @@ Portable engineering capabilities for agent-assisted software development.
 - At most one active change per feature branch. Active artifacts can travel in Git;
   archives are local and main must not receive active changes. Specs remain local and excluded from Git.
 - OKF 0.2 is for curated project documentation; Engram is for operational learnings.
-  Project MCP configuration and operational guides are available; the OKF bundle
-  and remote memory synchronization are not implemented here yet.
+  The [OKF maintenance skill](.opencode/skills/okf-maintenance/SKILL.md) creates,
+  updates and audits engineering bundles using an adaptable category profile.
+  Project MCP configuration and operational guides are available; this project's
+  own OKF bundle and remote memory synchronization are not implemented here yet.
 - OKF and Engram are shared foundations. SDD and subagents are optional capabilities
   for consuming projects. CodeGraph and Plane are optional integrations.
 - Adoption is modular; consumers need not replace their existing development workflow.
 
 ## OpenCode canon (MHSDD-2)
 
-`.opencode/agents/` contains the seven native Markdown agent definitions.
+`.opencode/agents/` contains the eight native Markdown agent definitions.
 `docs/workflow.md` defines the heavy SDD route, persistent handoffs, approvals,
 context boundaries and closure contract. Maintainer defines bounded light-route work;
 its persistent recovery, knowledge receipts and controller gates remain pending.
@@ -35,7 +39,7 @@ The previous `.agents/` definitions have been migrated, not maintained as a seco
 The project entry configuration is `opencode.json`, with
 `default_agent: "orchestrator"`. Start `opencode` in this repository to use it.
 Agent files set primary/subagent mode explicitly. Orchestrator's task permission
-allows only the six project specialists; each specialist denies further delegation.
+allows only the seven project specialists; each specialist denies further delegation.
 Reviewer denies shell execution and edits except review.md and memory.md under
 specs/open. Restriction to the currently assigned spec remains behavioral until
 controller support exists. These tool restrictions are not
@@ -77,7 +81,7 @@ The Engram MCP connection is configured; its persistence behavior awaits user te
 
 ## Codex adaptation
 
-`.codex/` is preserved. Its seven TOML files reference the OpenCode canon's Markdown
+`.codex/` is preserved. Its eight TOML files reference the OpenCode canon's Markdown
 bodies, without treating OpenCode YAML as Codex settings. `.codex/orchestrator.md`
 remains an opt-in primary-session adapter. The universal `AGENTS.md` does not
 automatically activate it. Native OpenCode task/skill calls need Codex equivalents;

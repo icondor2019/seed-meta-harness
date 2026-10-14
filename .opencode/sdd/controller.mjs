@@ -5,9 +5,10 @@ import { exists, lock, write, git, safePath, renameWithRetry, lineCheck } from '
 const planning=['exploration.md','proposal.md','design.md','tasks.md'];
 const states=['exploring','planning','plan_pending_approval','implementing','ready_for_review',
   'reviewing','changes_pending_approval','preparing_closure','knowledge_pending_approval',
-  'persisting_memory','archiving','archived'];
+  'persisting_knowledge','persisting_memory','archiving','archived'];
 const allowedRoles={explorer:['exploring'],planner:['planning'],builder:['implementing'],
-  reviewer:['reviewing'],archivist:['preparing_closure','persisting_memory']};
+  reviewer:['reviewing'],archivist:['preparing_closure','persisting_memory'],
+  'knowledge-curator':['persisting_knowledge']};
 async function branch(root) { return git(root,['rev-parse','--abbrev-ref','HEAD']); }
 async function spec(root,checkBranch=true) {
   const open=path.join(root,'specs/open');
@@ -36,14 +37,24 @@ export async function status(root) {
 export function statusLine(s) {return s.id?`${s.id}: ${s.state} (rev. ${s.revision})`:'SDD: idle';}
 export async function authorizePersistence(root,actor,kind,target) {
   const {s}=await spec(root);
+  if(kind==='okf') {
+    if(actor!=='knowledge-curator'||!s.implementationApproved||s.state!=='persisting_knowledge'||!s.okf?.selected?.length) throw Error('Approved Knowledge Curator required');
+    const relative=path.relative(root,path.resolve(root,target)).replaceAll('\\','/');
+    const pending=s.okf.updates.filter(u=>s.okf.selected.includes(u.id)&&!s.okf.receipts?.some(r=>r.update===u.id));
+    if(!pending.some(u=>u.files.includes(relative))) throw Error('Only pending approved OKF paths may be written');
+    safePath(root,relative);return;
+  }
   if(s.version!==3||actor!=='archivist'||!s.implementationApproved) throw Error('Approved Archivist required');
   if(kind==='engram') {
     if(s.state!=='persisting_memory'||!s.selected?.length) throw Error('Explicit candidate selection required');
     const matching=s.candidates.filter(c=>s.selected.includes(c.id)&&c.content===target);
     if(!matching.length) throw Error('Only exact approved candidate content may be persisted');
     if(matching.every(c=>s.memory?.receipts?.some(r=>r.candidate===c.id))) throw Error('Candidate already persisted; reuse receipt');
-  } else if(path.resolve(root,target)!==path.join(root,'specs/open',s.id,'memory.md')) {
-    throw Error('Archivist writes only its own memory.md');
+  } else {
+    const permitted=['memory.md',...(s.state==='preparing_closure'?['okf-update.md']:[])];
+    if(!permitted.some(file=>path.resolve(root,target)===path.join(root,'specs/open',s.id,file))) {
+      throw Error('Archivist writes only its own memory.md or first-pass okf-update.md');
+    }
   }
 }
 async function required(dir,files) {
@@ -55,13 +66,18 @@ function paths(root,files,requiredList=true) {
   return [...files];
 }
 function clear(s) {
-  for(const key of ['pending','implementationApproved','candidates','selected','memory']) delete s[key];
+  for(const key of ['pending','implementationApproved','candidates','selected','memory','okf']) delete s[key];
+}
+function closureState(s) {
+  if(!['persisted','not-needed'].includes(s.okf?.result)) return 'persisting_knowledge';
+  return ['persisted','not-needed'].includes(s.memory?.result)?'archiving':'persisting_memory';
 }
 function checkDispatch(s,agent) {
   if(s.version!==3) throw Error('Migrate legacy workflow before dispatch');
   if(!allowedRoles[agent]?.includes(s.state)) throw Error(`Cannot dispatch ${agent} from ${s.state}`);
   if(agent==='archivist'&&!s.implementationApproved) throw Error('Human implementation approval required');
   if(s.state==='persisting_memory'&&!s.selected?.length) throw Error('Explicit candidate selection required');
+  if(agent==='knowledge-curator'&&!s.okf?.selected?.length) throw Error('Explicit OKF selection required');
 }
 export async function dispatch(root,agent) {
   const {s}=await spec(root);checkDispatch(s,agent);return summary(s);
@@ -92,7 +108,10 @@ export async function run(root,action,args={},actor='orchestrator',context={}) {
     const at=(...allowed)=>{if(!allowed.includes(s.state)) throw Error(`Invalid transition from ${s.state}`);};
     if(action==='migrate') {
       if(actor!=='orchestrator') throw Error('Orchestrator required');
-      if(s.version===3) return summary(s);
+      if(s.version===3) {
+        if(['archiving','persisting_memory'].includes(s.state)&&!s.okf) {s.state='preparing_closure';return save();}
+        return summary(s);
+      }
       const backup=path.join(dir,`state.v${s.version}.backup.json`);
       try {await fs.writeFile(backup,raw,{flag:'wx'});}
       catch(e) {if(e.code!=='EEXIST'||await fs.readFile(backup,'utf8')!==raw) throw e;}
@@ -163,17 +182,50 @@ export async function run(root,action,args={},actor='orchestrator',context={}) {
     }
     if(action==='prepare_closure') {
       if(actor!=='archivist') throw Error('Archivist required');
-      at('preparing_closure');await required(dir,['memory.md']);
+      at('preparing_closure');await required(dir,['memory.md','okf-update.md']);
       if(!s.implementationApproved) throw Error('Human implementation approval required');
       if(!Array.isArray(args.candidates)||new Set(args.candidates.map(c=>c.id)).size!==args.candidates.length||
         args.candidates.some(c=>typeof c.id!=='string'||!c.id.trim()||typeof c.content!=='string'||!c.content.trim())) throw Error('Unique candidate IDs and explicit content required');
+      if(!Array.isArray(args.okfUpdates)||new Set(args.okfUpdates.map(u=>u.id)).size!==args.okfUpdates.length) throw Error('Explicit unique OKF updates required');
+      for(const u of args.okfUpdates) {
+        if(typeof u.id!=='string'||!u.id.trim()||typeof u.content!=='string'||!u.content.trim()) throw Error('OKF update ID and concrete content required');
+        for(const file of paths(root,u.files)) if(!/^knowledge\/.+\.md$/.test(file)||file.includes('\\')) throw Error('OKF paths must be knowledge/ Markdown files');
+      }
+      const allOkfPaths=args.okfUpdates.flatMap(u=>u.files);
+      if(new Set(allOkfPaths).size!==allOkfPaths.length) throw Error('OKF updates require exclusive destination paths');
+      if(s.memory?.result==='persisted'&&args.candidates.length) throw Error('Existing memory receipts must not be queued again');
+      if(!args.okfUpdates.length&&!args.okfReason?.trim()) throw Error('OKF no-update reason required');
+      if(!args.candidates.length&&!args.reason?.trim()) throw Error('Reason required');
       s.candidates=args.candidates.map(c=>({id:c.id,content:c.content}));
-      if(s.candidates.length) s.state='knowledge_pending_approval';
+      s.okf={updates:args.okfUpdates.map(u=>({id:u.id,content:u.content,files:[...u.files]})),
+        ...(args.okfUpdates.length?{}:{selected:[],result:'not-needed',reason:args.okfReason})};
+      if(!s.candidates.length) {s.selected=[];if(s.memory?.result!=='persisted') s.memory={result:'not-needed',reason:args.reason};}
+      if(s.candidates.length||s.okf.updates.length) s.state='knowledge_pending_approval';
       else {
-        if(!args.reason?.trim()) throw Error('Reason required');
-        s.selected=[];s.memory={result:'not-needed',reason:args.reason};s.state='archiving';
+        s.state=closureState(s);
       }
       return save();
+    }
+    if(action==='okf') {
+      if(actor!=='knowledge-curator') throw Error('Knowledge Curator required');
+      at('persisting_knowledge');checkDispatch(s,actor);
+      await required(dir,['okf-update.md']);
+      if(!Array.isArray(args.okfReceipts)||!args.okfReceipts.length) throw Error('OKF receipts required');
+      const receipts=[...(s.okf.receipts??[])];
+      for(const r of args.okfReceipts) {
+        const update=s.okf.updates.find(u=>u.id===r.update&&s.okf.selected.includes(u.id));
+        if(!update||typeof r.evidence!=='string'||!r.evidence.trim()) throw Error('Approved OKF update and validation evidence required');
+        const files=paths(root,r.files);
+        if(files.length!==update.files.length||!update.files.every(f=>files.includes(f))) throw Error('Receipt must cover exact approved OKF paths');
+        for(const file of files) if(!(await fs.stat(path.join(root,file))).isFile()) throw Error('OKF receipt needs existing files');
+        const existing=receipts.find(x=>x.update===r.update);
+        if(existing) {if(JSON.stringify(existing)!==JSON.stringify(r)) throw Error('Conflicting OKF receipt');continue;}
+        receipts.push({update:r.update,files:[...files],evidence:r.evidence});
+      }
+      await lineCheck(root);
+      s.okf.receipts=receipts;
+      s.okf.result=s.okf.selected.every(id=>receipts.some(r=>r.update===id))?'persisted':'partial';
+      s.state=closureState(s);return save();
     }
     if(action==='memory') {
       if(actor!=='archivist') throw Error('Archivist required');
@@ -187,14 +239,23 @@ export async function run(root,action,args={},actor='orchestrator',context={}) {
         if(receipts.some(x=>x.observation===r.observation)) throw Error('Observation already assigned');
         receipts.push({candidate:r.candidate,observation:r.observation});
       }
+      if(!s.okf) throw Error('Assess OKF closure before completing memory persistence');
       const complete=s.selected.every(id=>receipts.some(r=>r.candidate===id));
       s.memory={result:complete?'persisted':'partial',receipts};
-      if(complete) s.state='archiving';return save();
+      if(complete) s.state=closureState(s);return save();
     }
     if(action==='archive') {
       if(actor!=='orchestrator') throw Error('Orchestrator required');
       at('archiving');if(!['persisted','not-needed'].includes(s.memory?.result)) throw Error('Memory receipt required');
-      await required(dir,[...planning,'implementation.md','review.md','memory.md']);await lineCheck(root);
+      if(!['persisted','not-needed'].includes(s.okf?.result)) throw Error('OKF receipt or justified no-update outcome required');
+      if(s.okf.result==='persisted') {
+        for(const id of s.okf.selected) {
+          const receipt=s.okf.receipts?.find(r=>r.update===id);
+          if(!receipt) throw Error('Missing OKF receipt');
+          for(const file of receipt.files) if(!(await fs.stat(path.join(root,file))).isFile()) throw Error('OKF file missing before archive');
+        }
+      }
+      await required(dir,[...planning,'implementation.md','review.md','memory.md','okf-update.md']);await lineCheck(root);
       const dest=path.join(root,'specs/archived',s.id);await fs.mkdir(path.dirname(dest),{recursive:true});
       try {await fs.lstat(dest);throw Error('Archive collision');} catch(e) {if(e.code!=='ENOENT') throw e;}
       await renameWithRetry(dir,dest);s.state='archived';s.revision++;
@@ -222,6 +283,7 @@ export async function run(root,action,args={},actor='orchestrator',context={}) {
       at('plan_pending_approval','changes_pending_approval','knowledge_pending_approval');
       await required(dir,planning);
       if(s.state==='changes_pending_approval') await required(dir,['implementation.md','review.md']);
+      if(s.state==='knowledge_pending_approval') await required(dir,['memory.md','okf-update.md']);
       s.pending??={stage:s.state,requestedAt:Date.now()};return save();
     }
     if(action==='approve') {
@@ -232,21 +294,32 @@ export async function run(root,action,args={},actor='orchestrator',context={}) {
       if(!message||message.role!=='user'||!message.id||!message.sessionID||!message.text?.trim()||!Number.isFinite(message.createdAt)||message.createdAt<s.pending.requestedAt) throw Error('Explicit user message after approval request required');
       if(s.approvals?.some(a=>a.messageID===message.id&&a.sessionID===message.sessionID)) throw Error('User decision already recorded');
       const stage=s.state;
-      let selected;
+      let selected,selectedOkf;
       if(stage==='knowledge_pending_approval'&&args.decision==='accept') {
         selected=args.selected;
         if(!Array.isArray(selected)||new Set(selected).size!==selected.length||selected.some(id=>!s.candidates.some(c=>c.id===id))) throw Error('Explicit valid candidate selection required');
         if(!selected.length&&!args.reason?.trim()) throw Error('Reason required for empty selection');
+        if(!s.okf) throw Error('Prepare OKF closure proposal first');
+        selectedOkf=args.selectedOkf;
+        if(!Array.isArray(selectedOkf)||new Set(selectedOkf).size!==selectedOkf.length||selectedOkf.some(id=>!s.okf.updates.some(u=>u.id===id))) throw Error('Explicit valid OKF selection required');
+        if(!selectedOkf.length&&s.okf.updates.length&&!args.okfReason?.trim()) throw Error('Reason required for empty OKF selection');
       }
-      s.approvals??=[];s.approvals.push({stage,decision:args.decision,source:'user-text',...(selected?{selected:[...selected]}:{}),messageID:message.id,sessionID:message.sessionID,at:new Date().toISOString()});
+      s.approvals??=[];s.approvals.push({stage,decision:args.decision,source:'user-text',...(selected?{selected:[...selected],selectedOkf:[...selectedOkf]}:{}),messageID:message.id,sessionID:message.sessionID,at:new Date().toISOString()});
       delete s.pending;
       if(args.decision==='reject') {
+        const persistedMemory=stage==='knowledge_pending_approval'&&s.memory?.result==='persisted'?s.memory:undefined;
         clear(s);s.state=stage==='plan_pending_approval'?'planning':stage==='knowledge_pending_approval'?'preparing_closure':'implementing';
+        if(persistedMemory) s.memory=persistedMemory;
         if(stage==='knowledge_pending_approval') s.implementationApproved=true;
         s.feedback={owner:stage==='plan_pending_approval'?'planner':stage==='knowledge_pending_approval'?'archivist':'builder',text:message.text.slice(0,1000)};
       } else if(stage==='plan_pending_approval') s.state='implementing';
       else if(stage==='changes_pending_approval') {s.implementationApproved=true;s.state='preparing_closure';}
-      else {s.selected=[...selected];s.state=selected.length?'persisting_memory':'archiving';if(!selected.length) s.memory={result:'not-needed',reason:args.reason};}
+      else {
+        s.selected=[...selected];if(!selected.length&&s.memory?.result!=='persisted') s.memory={result:'not-needed',reason:args.reason};
+        s.okf.selected=[...selectedOkf];
+        if(!selectedOkf.length) {s.okf.result='not-needed';s.okf.reason=args.okfReason??s.okf.reason;}
+        s.state=closureState(s);
+      }
       return save();
     }
     throw Error('Unknown action');

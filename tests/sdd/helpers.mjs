@@ -15,13 +15,14 @@ export async function fixture(t) {
   });
   git(root,'init','-b','codex/test');git(root,'config','user.email','test@example.invalid');git(root,'config','user.name','Test');
   await fs.writeFile(path.join(root,'base.txt'),'base');git(root,'add','.');git(root,'commit','-m','initial');
-  const call=(action,args={},actor='orchestrator',context={})=>run(root,action,args,actor,context);
+  const call=(action,args={},actor='orchestrator',context={})=>run(root,action,
+    action==='prepare_closure'?{okfUpdates:[],okfReason:'Fixture has no documentation changes',...args}:args,actor,context);
   await call('create',{id:'test',title:'Test workflow'});
   const dir=path.join(root,'specs/open/test');
   const put=(file,text='arbitrary artifact content')=>fs.writeFile(path.join(dir,file),text);
   const state=async()=>JSON.parse(await fs.readFile(path.join(dir,'state.json'),'utf8'));
   async function decision(value='accept',text='Sí, apruebo',extra={}) {
-    return call('approve',{decision:value,...extra},'orchestrator',{userMessage:{role:'user',id:`user-${++id}`,sessionID:'session',createdAt:Date.now(),text}});
+    return call('approve',{decision:value,selectedOkf:[],...extra},'orchestrator',{userMessage:{role:'user',id:`user-${++id}`,sessionID:'session',createdAt:Date.now(),text}});
   }
   async function plan() {
     await put('exploration.md');await call('transition',{to:'planning'});
@@ -30,7 +31,7 @@ export async function fixture(t) {
   }
   async function review(files=['new.txt']) {
     if(files.includes('new.txt')) await fs.writeFile(path.join(root,'new.txt'),'new');
-    await put('implementation.md');await put('review.md');await put('memory.md');
+    await put('implementation.md');await put('review.md');await put('memory.md');await put('okf-update.md');
     await call('transition',{to:'ready_for_review',files});await call('transition',{to:'reviewing'});
     await call('review',{verdict:'pass'},'reviewer');
   }

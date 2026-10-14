@@ -40,6 +40,7 @@ not historical stage narratives. Do not inspect controller source on tool failur
 | implementation.md | Builder: changes, explicit changed paths, tests and remaining work |
 | review.md | Reviewer: independent task/criterion evidence, security, findings and verdict |
 | memory.md | Specialist candidates; Archivist exact proposals and persistence receipts |
+| okf-update.md | Archivist first pass: proposed OKF updates, stable IDs, evidence and checks |
 
 design.md without UI changes: "No aplica: este cambio no incluye UI/frontend".
 General technical design stays in proposal.md; execution/testing in tasks.md.
@@ -48,8 +49,10 @@ Builder/Reviewer skip frontend design/checks when absent, retaining relevant tes
 ## Flow
 
 Explorer -> Planner -> explicit user plan approval -> Builder -> Reviewer -> explicit
-user implementation approval -> Archivist proposal -> explicit user candidate selection
--> Archivist persistence -> Orchestrator mechanical archive. Empty proposals/selections
+user implementation approval -> Archivist curation -> explicit user knowledge selection
+-> Knowledge Curator OKF persistence -> Archivist Engram persistence -> Orchestrator
+mechanical archive. Justified no-write outcomes skip the corresponding persistence.
+Empty proposals/selections
 with reasons cause no Engram writes. Reviewer changes-required returns to Builder;
 implementation changes renew review/acceptance, material scope changes renew planning.
 No content hashes, human CLI approval commands or mandatory routine report actions.
@@ -61,6 +64,27 @@ content. Record real IDs one at a time; resume only pending items. Failures rema
 visible and block completion; if a save succeeds without a receipt, reconcile it
 before retrying. Engram entries contain no commit references, SHA or Git relationships.
 Archivist does not prepare external docs, complete reports or move the spec.
+
+Knowledge Curator is the sole OKF authoring specialist and also supports direct
+session assignments without SDD. In closure Archivist prepares okf-update.md, or a
+reason why no update is needed, after implementation acceptance. Orchestrator presents
+concrete proposals for explicit approval separately from Engram candidates, then
+assigns the artifact path, approved IDs and concise context to Knowledge Curator.
+The proposal artifact does not authorize publication. Maintainer remains unable to
+persist OKF; Archivist proposes changes but never edits knowledge/.
+
+prepare_closure requires both candidates and okfUpdates, with separate reasons when
+empty. Approval records separate selected and selectedOkf lists. Approved OKF work
+enters persisting_knowledge; Knowledge Curator records incremental okfReceipts with
+update IDs, exact destination paths and actual validation evidence. Only pending
+approved paths are writable through the native persistence hook. Failure leaves the
+spec open; retries reuse receipts. After OKF completes, approved Engram work enters
+persisting_memory. Archive requires both persisted or justified no-write outcomes and
+rechecks existence of receipted OKF files. Content semantics remain agent/user work.
+
+Older open states without OKF assessment cannot archive. Calling migrate on a version-3
+archiving/persisting_memory state without okf reopens preparing_closure, preserving
+memory receipts. Never queue already persisted Engram candidates again. Git stays separate.
 
 Orchestrator requests archive only after recorded persistence or justified no-write
 outcome. The controller moves the entire spec, rejecting collisions and failures.

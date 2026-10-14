@@ -69,3 +69,19 @@ test('native persistence hooks allow only selected content and memory artifact, 
  await hooks['tool.execute.before']({tool:'engram_mem_save',sessionID:'child'},{args:{content:'two'}});
  await assert.rejects(hooks['tool.execute.before']({tool:'engram_mem_update',sessionID:'child'},{args:{content:'two'}}),/mem_save only/);
 });
+
+test('Knowledge Curator task and write hooks require approved OKF work while a spec is active',async t=>{
+ const f=await fixture(t);const hooks=await SddPlugin({worktree:f.root,client:client('knowledge-curator')});
+ const task={args:{subagent_type:'knowledge-curator'}};
+ const file='knowledge/architecture/system.md';
+ await assert.rejects(hooks['tool.execute.before']({tool:'task'},task),/Cannot dispatch/);
+ await f.plan();await f.review();await f.acceptImplementation();
+ await f.call('prepare_closure',{candidates:[],reason:'None',okfUpdates:[{id:'K1',content:'Accepted architecture',files:[file]}]},'archivist');
+ const write={args:{filePath:path.join(f.root,file)}};
+ await assert.rejects(hooks['tool.execute.before']({tool:'write',sessionID:'child'},write),/Approved Knowledge Curator/);
+ await f.call('request_approval');await f.decision('accept','Approve K1',{selected:[],selectedOkf:['K1'],reason:'None'});
+ await hooks['tool.execute.before']({tool:'task'},task);
+ await hooks['tool.execute.before']({tool:'write',sessionID:'child'},write);
+ await assert.rejects(hooks['tool.execute.before']({tool:'write',sessionID:'child'},{args:{filePath:path.join(f.root,'knowledge/unapproved.md')}}),/approved OKF paths/);
+ await assert.rejects(hooks['tool.execute.before']({tool:'apply_patch',sessionID:'child'},{args:{}}),/explicit paths/);
+});
